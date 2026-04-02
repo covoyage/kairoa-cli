@@ -30,7 +30,11 @@ jobs:
     - name: Build
       env:
         CGO_ENABLED: 0
-      run: go build -v .
+      run: |
+        go build -v -o kairoa .
+        echo "Built binary:"
+        ls -la kairoa
+        file kairoa || echo "file command not available"
 
     - name: Test
       run: go test -v ./...
@@ -39,6 +43,8 @@ jobs:
       if: runner.os != 'Windows'
       shell: bash
       run: |
+        echo "Current directory: $(pwd)"
+        echo "Binary location: $(ls -la kairoa)"
         ./kairoa --help
         ./kairoa hash text "hello"
         ./kairoa uuid v4

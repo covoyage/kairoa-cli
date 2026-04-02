@@ -131,7 +131,7 @@ brews:
     repository:
       owner: covoyage
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     homepage: https://github.com/covoyage/kairoa-cli
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
     license: "MIT"
@@ -145,7 +145,7 @@ scoops:
   - repository:
       owner: covoyage
       name: scoop-bucket
-    folder: bucket
+    directory: bucket
     homepage: https://github.com/covoyage/kairoa-cli
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
     license: MIT
