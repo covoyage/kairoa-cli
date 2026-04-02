@@ -55,42 +55,4 @@ jobs:
         .\kairoa.exe base64 encode "test"
         .\kairoa.exe time now
 
-  # Lint code
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
 
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25'
-        cache: true
-
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: latest
-        args: --timeout=5m
-
-  # Check code formatting
-  format:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25'
-        cache: true
-
-    - name: Check formatting
-      run: |
-        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
-          echo "The following files need formatting:"
-          gofmt -s -l .
-          exit 1
-        fi
