@@ -1,0 +1,179 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v0.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  # Build and release for multiple platforms
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # macOS builds
+          - goos: darwin
+            goarch: amd64
+            platform: macos-amd64
+            ext: ''
+          - goos: darwin
+            goarch: arm64
+            platform: macos-arm64
+            ext: ''
+          # Linux builds
+          - goos: linux
+            goarch: amd64
+            platform: linux-amd64
+            ext: ''
+          - goos: linux
+            goarch: arm64
+            platform: linux-arm64
+            ext: ''
+          - goos: linux
+            goarch: '386'
+            platform: linux-386
+            ext: ''
+          # Windows builds
+          - goos: windows
+            goarch: amd64
+            platform: windows-amd64
+            ext: '.exe'
+          - goos: windows
+            goarch: arm64
+            platform: windows-arm64
+            ext: '.exe'
+          - goos: windows
+            goarch: '386'
+            platform: windows-386
+            ext: '.exe'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        cache: true
+
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        output_name="kairoa-${{ matrix.platform }}${{ matrix.ext }}"
+        go build -ldflags="-s -w -X main.version=${{ github.ref_name || github.event.inputs.version }}" -o "dist/${output_name}" .
+        
+        # Create archive
+        cd dist
+        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          zip "kairoa-${{ matrix.platform }}.zip" "${output_name}"
+        else
+          tar -czf "kairoa-${{ matrix.platform }}.tar.gz" "${output_name}"
+        fi
+        cd ..
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: kairoa-${{ matrix.platform }}
+        path: dist/kairoa-${{ matrix.platform }}.*
+
+  # Create GitHub Release and upload all artifacts
+  create-release:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: kairoa-*
+
+    - name: Display structure
+      run: ls -R dist
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name || github.event.inputs.version }}
+        name: Release ${{ github.ref_name || github.event.inputs.version }}
+        draft: false
+        prerelease: false
+        files: |
+          dist/kairoa-*/*.tar.gz
+          dist/kairoa-*/*.zip
+        generate_release_notes: true
+        body: |
+          ## Kairoa CLI ${{ github.ref_name || github.event.inputs.version }}
+
+          ### Installation
+
+          #### macOS
+          ```bash
+          # Intel Mac
+          curl -L -o kairoa.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name || github.event.inputs.version }}/kairoa-macos-amd64.tar.gz
+          
+          # Apple Silicon Mac
+          curl -L -o kairoa.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name || github.event.inputs.version }}/kairoa-macos-arm64.tar.gz
+          
+          tar -xzf kairoa.tar.gz
+          sudo mv kairoa /usr/local/bin/
+          ```
+
+          #### Linux
+          ```bash
+          curl -L -o kairoa.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name || github.event.inputs.version }}/kairoa-linux-amd64.tar.gz
+          tar -xzf kairoa.tar.gz
+          sudo mv kairoa /usr/local/bin/
+          ```
+
+          #### Windows
+          Download `kairoa-windows-amd64.zip` and extract to a directory in your PATH.
+
+          ### Available Commands
+          - `kairoa hash` - Calculate hash values
+          - `kairoa uuid` - Generate UUIDs
+          - `kairoa base64` - Base64 encode/decode
+          - `kairoa json` - JSON formatting
+          - `kairoa url` - URL encoding/decoding
+          - `kairoa jwt` - Decode JWT tokens
+          - And 40+ more utilities...
+
+          Run `kairoa --help` for full list.
+
+  # Build Homebrew formula (macOS/Linux)
+  homebrew:
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+    - name: Update Homebrew tap
+      uses: mislav/bump-homebrew-formula-action@v3
+      with:
+        formula-name: kairoa
+        formula-path: Formula/kairoa.rb
+        homebrew-tap: ${{ github.repository_owner }}/homebrew-tap
+        base-branch: main
+        download-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/kairoa-macos-amd64.tar.gz
+        commit-message: |
+          kairoa ${{ github.ref_name }}
+
+          Created by https://github.com/mislav/bump-homebrew-formula-action
+      env:
+        COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
