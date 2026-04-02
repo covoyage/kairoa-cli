@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go-version: ['1.21']
 
     steps:
     - name: Checkout code
@@ -22,19 +21,22 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: '1.25'
         cache: true
 
     - name: Get dependencies
       run: go mod download
 
     - name: Build
+      env:
+        CGO_ENABLED: 0
       run: go build -v .
 
     - name: Test
       run: go test -v ./...
 
-    - name: Test CLI commands
+    - name: Test CLI commands (Unix)
+      if: runner.os != 'Windows'
       shell: bash
       run: |
         ./kairoa --help
@@ -42,6 +44,16 @@ jobs:
         ./kairoa uuid v4
         ./kairoa base64 encode "test"
         ./kairoa time now
+
+    - name: Test CLI commands (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        .\kairoa.exe --help
+        .\kairoa.exe hash text "hello"
+        .\kairoa.exe uuid v4
+        .\kairoa.exe base64 encode "test"
+        .\kairoa.exe time now
 
   # Lint code
   lint:
@@ -53,11 +65,11 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.25'
         cache: true
 
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v6
       with:
         version: latest
         args: --timeout=5m
@@ -72,7 +84,7 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.25'
         cache: true
 
     - name: Check formatting
