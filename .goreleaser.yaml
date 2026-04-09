@@ -79,7 +79,7 @@ release:
     name: kairoa-cli
   draft: false
   prerelease: auto
-  name_template: "{{.ProjectName}}-v{{.Version}}"
+  # name_template intentionally omitted — GitHub uses the tag name as the release title
   header: |
     ## Kairoa CLI v{{.Version}}
     
@@ -148,6 +148,7 @@ scoops:
   - repository:
       owner: covoyage
       name: scoop-bucket
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
     directory: bucket
     homepage: https://github.com/covoyage/kairoa-cli
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
