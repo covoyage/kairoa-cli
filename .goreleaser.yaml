@@ -84,7 +84,7 @@ homebrew_casks:
     # directory defaults to "Casks"; omit to use default
     homepage: https://github.com/covoyage/kairoa-cli
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
-    license: "MIT"
+    license: "AGPL-3.0"
     hooks:
       post:
         install: |
@@ -101,7 +101,7 @@ scoops:
     directory: bucket
     homepage: https://github.com/covoyage/kairoa-cli
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
-    license: MIT
+    license: AGPL-3.0
 
 # Docker image configuration (optional)
 # dockers:
@@ -124,7 +124,7 @@ nfpms:
     homepage: https://github.com/covoyage/kairoa-cli
     maintainer: Covoyage <support@covoyage.dev>
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
-    license: MIT
+    license: AGPL-3.0
     formats:
       - deb
       - rpm
