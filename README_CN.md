@@ -4,7 +4,7 @@ Kairoa 开发者工具箱的命令行版本，包含 50+ 实用工具。
 
 [![Build Status](https://github.com/covoyage/kairoa-cli/workflows/Build/badge.svg)](https://github.com/covoyage/kairoa-cli/actions)
 [![Release](https://img.shields.io/github/release/covoyage/kairoa-cli.svg)](https://github.com/covoyage/kairoa-cli/releases/latest)
-[![Go Version](https://img.shields.io/badge/go-%3E%3D1.21-blue.svg)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/go-%3E%3D1.25-blue.svg)](https://golang.org)
 
 ## 为什么选择 CLI？
 
@@ -95,51 +95,43 @@ kairoa data csv2json < data.csv
 
 ## 安装
 
-### 快速安装（macOS/Linux）
+### Homebrew（macOS / Linux）
+
+```bash
+brew install covoyage/tap/kairoa
+```
+
+### Scoop（Windows）
+
+```powershell
+scoop bucket add covoyage https://github.com/covoyage/scoop-bucket
+scoop install kairoa
+```
+
+### 快速安装脚本（macOS / Linux）
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/covoyage/kairoa-cli/main/install.sh | bash
 ```
 
-### Homebrew（macOS/Linux）
+### 手动下载
+
+从 [GitHub Releases](https://github.com/covoyage/kairoa-cli/releases/latest) 下载对应平台的预编译二进制文件：
+
+| 平台 | 文件 |
+|------|------|
+| macOS（Apple Silicon） | `kairoa_darwin_arm64.tar.gz` |
+| macOS（Intel） | `kairoa_darwin_x86_64.tar.gz` |
+| Linux（x86_64） | `kairoa_linux_x86_64.tar.gz` |
+| Linux（ARM64） | `kairoa_linux_arm64.tar.gz` |
+| Windows（x86_64） | `kairoa_windows_x86_64.zip` |
 
 ```bash
-brew tap covoyage/tap
-brew install kairoa
-```
-
-### 手动安装
-
-#### macOS
-
-```bash
-# Intel Mac
-curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/latest/download/kairoa_darwin_x86_64.tar.gz
-
-# Apple Silicon Mac
-curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/latest/download/kairoa_darwin_arm64.tar.gz
-
-tar -xzf kairoa.tar.gz
+# macOS / Linux 示例
+tar -xzf kairoa_*.tar.gz
 sudo mv kairoa /usr/local/bin/
-
-# 验证安装
-kairoa --version
+kairoa version
 ```
-
-#### Linux
-
-```bash
-curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/latest/download/kairoa_linux_x86_64.tar.gz
-tar -xzf kairoa.tar.gz
-sudo mv kairoa /usr/local/bin/
-
-# 验证安装
-kairoa --version
-```
-
-#### Windows
-
-从 [GitHub Releases](https://github.com/covoyage/kairoa-cli/releases) 下载最新版本并解压到 PATH 目录中。
 
 ### 从源码构建
 
@@ -147,6 +139,29 @@ kairoa --version
 git clone https://github.com/covoyage/kairoa-cli.git
 cd kairoa-cli
 go build -o kairoa .
+```
+
+## 快速开始
+
+```bash
+# 计算哈希
+kairoa hash text "hello world"
+
+# 生成 UUID
+kairoa uuid v4
+
+# Base64 编码 / 解码
+kairoa base64 encode "hello"
+kairoa base64 decode "aGVsbG8="
+
+# 格式化 JSON
+echo '{"a":1}' | kairoa json format
+
+# 查看版本
+kairoa version
+
+# 查看所有命令
+kairoa --help
 ```
 
 ## 使用方法
