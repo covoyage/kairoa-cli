@@ -32,6 +32,16 @@ var portScanCmd = &cobra.Command{
 		concurrency, _ := cmd.Flags().GetInt("concurrency")
 		showClosed, _ := cmd.Flags().GetBool("show-closed")
 
+		if startPort < 1 || startPort > 65535 {
+			return fmt.Errorf("start port must be between 1 and 65535")
+		}
+		if endPort < 1 || endPort > 65535 {
+			return fmt.Errorf("end port must be between 1 and 65535")
+		}
+		if endPort < startPort {
+			return fmt.Errorf("end port (%d) must be >= start port (%d)", endPort, startPort)
+		}
+
 		fmt.Printf("Scanning %s (ports %d-%d)...\n\n", host, startPort, endPort)
 		startTime := time.Now()
 

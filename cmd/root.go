@@ -1,9 +1,24 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/covoyage/kairoa-cli/internal/i18n"
 	"github.com/spf13/cobra"
 )
+
+var (
+	buildVersion = "dev"
+	buildCommit  = "none"
+	buildDate    = "unknown"
+)
+
+// SetVersionInfo is called from main with values injected via -ldflags.
+func SetVersionInfo(version, commit, date string) {
+	buildVersion = version
+	buildCommit = commit
+	buildDate = date
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "kairoa",
@@ -18,7 +33,6 @@ It provides various utilities for developers including:
   - JWT decoding
   - And more...`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// Handle language flag
 		lang, _ := cmd.Flags().GetString("lang")
 		if lang != "" {
 			switch lang {
@@ -32,15 +46,20 @@ It provides various utilities for developers including:
 }
 
 func Execute() error {
-	// Initialize i18n with detected locale
 	i18n.Init()
-	
 	return rootCmd.Execute()
 }
 
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	
-	// Add global flags
 	rootCmd.PersistentFlags().StringP("lang", "l", "", "Language (en, zh)")
+	rootCmd.AddCommand(versionCmd)
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show version information",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("kairoa %s (commit: %s, built: %s)\n", buildVersion, buildCommit, buildDate)
+	},
 }
