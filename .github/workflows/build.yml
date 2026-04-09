@@ -27,7 +27,8 @@ jobs:
     - name: Get dependencies
       run: go mod download
 
-    - name: Build
+    - name: Build (Unix)
+      if: runner.os != 'Windows'
       env:
         CGO_ENABLED: 0
       run: |
@@ -35,6 +36,16 @@ jobs:
         echo "Built binary:"
         ls -la kairoa
         file kairoa || echo "file command not available"
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      env:
+        CGO_ENABLED: 0
+      shell: pwsh
+      run: |
+        go build -v -o kairoa.exe .
+        Write-Host "Built binary:"
+        Get-Item kairoa.exe | Select-Object Name, Length
 
     - name: Test
       run: go test -v ./...
