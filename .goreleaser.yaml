@@ -79,7 +79,7 @@ release:
     name: kairoa-cli
   draft: false
   prerelease: auto
-  name_template: "{{.ProjectName}}-v{{.Version}}"
+  # name_template intentionally omitted — GitHub uses the tag name as the release title
   header: |
     ## Kairoa CLI v{{.Version}}
     
@@ -144,14 +144,16 @@ homebrew_casks:
           end
 
 # Scoop configuration (Windows package manager)
-scoops:
-  - repository:
-      owner: covoyage
-      name: scoop-bucket
-    directory: bucket
-    homepage: https://github.com/covoyage/kairoa-cli
-    description: "Kairoa CLI - A developer toolbox with 50+ utilities"
-    license: MIT
+# Disabled until covoyage/scoop-bucket repository is created.
+# To enable: create the repo, then uncomment this section.
+# scoops:
+#   - repository:
+#       owner: covoyage
+#       name: scoop-bucket
+#     directory: bucket
+#     homepage: https://github.com/covoyage/kairoa-cli
+#     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
+#     license: MIT
 
 # Docker image configuration (optional)
 # dockers:
