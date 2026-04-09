@@ -13,7 +13,11 @@ import (
 
 	"github.com/covoyage/kairoa-cli/internal/i18n"
 	"github.com/spf13/cobra"
+	"github.com/zeebo/blake3"
+	"golang.org/x/crypto/blake2b"
+	"golang.org/x/crypto/blake2s"
 	"golang.org/x/crypto/ripemd160"
+	"golang.org/x/crypto/sha3"
 )
 
 var hashCmd = &cobra.Command{
@@ -31,7 +35,7 @@ var hashTextCmd = &cobra.Command{
 		algorithms, _ := cmd.Flags().GetStringSlice("algorithm")
 
 		if len(algorithms) == 0 {
-			algorithms = []string{"md5", "sha1", "sha256", "sha384", "sha512", "ripemd160"}
+			algorithms = []string{"md5", "sha1", "sha256", "sha384", "sha512", "sha3-256", "sha3-512", "blake2b-256", "blake2b-512", "blake2s-256", "blake3", "ripemd160"}
 		}
 
 		for _, algo := range algorithms {
@@ -57,7 +61,7 @@ var hashFileCmd = &cobra.Command{
 		algorithms, _ := cmd.Flags().GetStringSlice("algorithm")
 
 		if len(algorithms) == 0 {
-			algorithms = []string{"md5", "sha1", "sha256", "sha384", "sha512", "ripemd160"}
+			algorithms = []string{"md5", "sha1", "sha256", "sha384", "sha512", "sha3-256", "sha3-512", "blake2b-256", "blake2b-512", "blake2s-256", "blake3", "ripemd160"}
 		}
 
 		file, err := os.Open(filePath)
@@ -97,6 +101,28 @@ func getHasher(algo string) hash.Hash {
 		return sha512.New384()
 	case "sha512":
 		return sha512.New()
+	case "sha3-224":
+		return sha3.New224()
+	case "sha3-256":
+		return sha3.New256()
+	case "sha3-384":
+		return sha3.New384()
+	case "sha3-512":
+		return sha3.New512()
+	case "blake2b-256":
+		h, _ := blake2b.New256(nil)
+		return h
+	case "blake2b-384":
+		h, _ := blake2b.New384(nil)
+		return h
+	case "blake2b-512":
+		h, _ := blake2b.New512(nil)
+		return h
+	case "blake2s-256":
+		h, _ := blake2s.New256(nil)
+		return h
+	case "blake3":
+		return blake3.New()
 	case "ripemd160":
 		return ripemd160.New()
 	default:
