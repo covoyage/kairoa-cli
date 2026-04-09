@@ -167,9 +167,9 @@ jobs:
   homebrew:
     needs: create-release
     runs-on: ubuntu-latest
-    if: secrets.COMMITTER_TOKEN != ''
     steps:
     - name: Update Homebrew tap
+      continue-on-error: true
       uses: mislav/bump-homebrew-formula-action@v3
       with:
         formula-name: kairoa
