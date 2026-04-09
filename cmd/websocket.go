@@ -67,24 +67,19 @@ var wsCmd = &cobra.Command{
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-		// Start reader goroutine
+		// Start reader goroutine — blocks on ReadMessage, no busy-loop.
 		go func() {
+			defer cancel()
 			for {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-					_, message, err := conn.ReadMessage()
-					if err != nil {
-						if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-							fmt.Printf("\n%s: %v\n", color.RedString("Error"), err)
-						}
-						return
+				_, message, err := conn.ReadMessage()
+				if err != nil {
+					if ctx.Err() == nil && websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+						fmt.Printf("\n%s: %v\n", color.RedString("Error"), err)
 					}
-					fmt.Printf("\r%s %s\n", color.CyanString("<--"), string(message))
-					fmt.Print("> ")
+					return
 				}
+				fmt.Printf("\r%s %s\n", color.CyanString("<--"), string(message))
+				fmt.Print("> ")
 			}
 		}()
 

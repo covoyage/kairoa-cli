@@ -92,8 +92,11 @@ var httpRequestCmd = &cobra.Command{
 			// Try to format JSON
 			var jsonData interface{}
 			if err := json.Unmarshal(respBody, &jsonData); err == nil {
-				formatted, _ := json.MarshalIndent(jsonData, "", "  ")
-				fmt.Println(string(formatted))
+				if formatted, err := json.MarshalIndent(jsonData, "", "  "); err == nil {
+					fmt.Println(string(formatted))
+				} else {
+					fmt.Println(string(respBody))
+				}
 			} else {
 				fmt.Println(string(respBody))
 			}
@@ -151,8 +154,11 @@ var httpGetCmd = &cobra.Command{
 			// Try to format JSON
 			var jsonData interface{}
 			if err := json.Unmarshal(body, &jsonData); err == nil {
-				formatted, _ := json.MarshalIndent(jsonData, "", "  ")
-				fmt.Println(string(formatted))
+				if formatted, err := json.MarshalIndent(jsonData, "", "  "); err == nil {
+					fmt.Println(string(formatted))
+				} else {
+					fmt.Println(string(body))
+				}
 			} else {
 				fmt.Println(string(body))
 			}
@@ -225,10 +231,10 @@ var httpHeadersCmd = &cobra.Command{
 				return fmt.Errorf("request failed: %w", err)
 			}
 			defer resp.Body.Close()
-			// Consume body
 			io.Copy(io.Discard, resp.Body)
+		} else {
+			defer resp.Body.Close()
 		}
-		defer resp.Body.Close()
 
 		fmt.Printf("%s %s\n\n", color.GreenString("HTTP"), resp.Status)
 

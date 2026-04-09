@@ -48,7 +48,7 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     files:
       - README.md
       - LICENSE
@@ -125,20 +125,23 @@ release:
     kairoa --help
     ```
 
-# Homebrew tap configuration
-brews:
+# Homebrew tap configuration (homebrew_casks replaces deprecated brews since v2.10)
+homebrew_casks:
   - name: kairoa
     repository:
       owner: covoyage
       name: homebrew-tap
-    directory: Formula
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    # directory defaults to "Casks"; omit to use default
     homepage: https://github.com/covoyage/kairoa-cli
     description: "Kairoa CLI - A developer toolbox with 50+ utilities"
     license: "MIT"
-    test: |
-      system "#{bin}/kairoa", "--version"
-    install: |
-      bin.install "kairoa"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kairoa"]
+          end
 
 # Scoop configuration (Windows package manager)
 scoops:

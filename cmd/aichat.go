@@ -171,7 +171,14 @@ func sendChatRequest(baseURL, apiKey, model, message string, stream bool) error 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
-	client := &http.Client{Timeout: 60 * time.Second}
+	// Disable timeout for streaming responses
+	var client *http.Client
+	if stream {
+		client = &http.Client{}
+	} else {
+		client = &http.Client{Timeout: 60 * time.Second}
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -181,6 +188,10 @@ func sendChatRequest(baseURL, apiKey, model, message string, stream bool) error 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("API error: %s - %s", resp.Status, string(body))
+	}
+
+	if stream {
+		return readSSEStream(resp.Body)
 	}
 
 	var result struct {
@@ -200,6 +211,38 @@ func sendChatRequest(baseURL, apiKey, model, message string, stream bool) error 
 	}
 
 	return nil
+}
+
+// readSSEStream reads a Server-Sent Events stream from the OpenAI API and
+// prints each content delta as it arrives.
+func readSSEStream(body io.Reader) error {
+	scanner := bufio.NewScanner(body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			fmt.Println()
+			break
+		}
+
+		var chunk struct {
+			Choices []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+			} `json:"choices"`
+		}
+		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+			continue
+		}
+		if len(chunk.Choices) > 0 {
+			fmt.Print(chunk.Choices[0].Delta.Content)
+		}
+	}
+	return scanner.Err()
 }
 
 func sendChatRequestWithHistory(baseURL, apiKey, model string, messages []map[string]string) (string, error) {

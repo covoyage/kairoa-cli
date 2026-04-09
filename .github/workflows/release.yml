@@ -1,9 +1,9 @@
 name: Release
 
+# This workflow is a manual fallback for building release binaries without GoReleaser.
+# Tag-triggered releases are handled by goreleaser.yml — do not add a push.tags trigger
+# here to avoid double releases.
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -64,19 +64,26 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.25'
         cache: true
 
     - name: Build binary
+      shell: bash
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
         CGO_ENABLED: 0
       run: |
+        VERSION="${{ github.ref_name || github.event.inputs.version }}"
+        COMMIT="${{ github.sha }}"
+        DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         output_name="kairoa-${{ matrix.platform }}${{ matrix.ext }}"
-        go build -ldflags="-s -w -X main.version=${{ github.ref_name || github.event.inputs.version }}" -o "dist/${output_name}" .
+        go build \
+          -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" \
+          -o "dist/${output_name}" .
         
         # Create archive
+        mkdir -p dist
         cd dist
         if [[ "${{ matrix.goos }}" == "windows" ]]; then
           zip "kairoa-${{ matrix.platform }}.zip" "${output_name}"
@@ -156,22 +163,22 @@ jobs:
 
           Run `kairoa --help` for full list.
 
-  # Build Homebrew formula (macOS/Linux)
+  # Update Homebrew tap (requires COMMITTER_TOKEN secret with write access to the tap repo)
   homebrew:
     needs: create-release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     steps:
     - name: Update Homebrew tap
+      continue-on-error: true
       uses: mislav/bump-homebrew-formula-action@v3
       with:
         formula-name: kairoa
         formula-path: Formula/kairoa.rb
         homebrew-tap: ${{ github.repository_owner }}/homebrew-tap
         base-branch: main
-        download-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/kairoa-macos-amd64.tar.gz
+        download-url: https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.version }}/kairoa-macos-amd64.tar.gz
         commit-message: |
-          kairoa ${{ github.ref_name }}
+          kairoa ${{ github.event.inputs.version }}
 
           Created by https://github.com/mislav/bump-homebrew-formula-action
       env:

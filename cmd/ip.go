@@ -52,14 +52,15 @@ var ipLookupCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("failed to resolve: %w", err)
 			}
-			if len(ips) > 0 {
-				ip = ips[0]
+			if len(ips) == 0 {
+				return fmt.Errorf("no IP addresses found for %q", query)
 			}
+			ip = ips[0]
 		}
 
 		fmt.Printf("IP Address: %s\n\n", color.GreenString(ip.String()))
 
-		// Get geolocation info
+		// Get geolocation info (ip-api.com free tier only supports HTTP)
 		url := fmt.Sprintf("http://ip-api.com/json/%s", ip.String())
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Get(url)

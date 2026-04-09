@@ -6,7 +6,7 @@ A command-line version of the Kairoa developer toolbox with 50+ utilities.
 
 [![Build Status](https://github.com/covoyage/kairoa-cli/workflows/Build/badge.svg)](https://github.com/covoyage/kairoa-cli/actions)
 [![Release](https://img.shields.io/github/release/covoyage/kairoa-cli.svg)](https://github.com/covoyage/kairoa-cli/releases/latest)
-[![Go Version](https://img.shields.io/badge/go-%3E%3D1.21-blue.svg)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/go-%3E%3D1.25-blue.svg)](https://golang.org)
 
 ## Why CLI?
 

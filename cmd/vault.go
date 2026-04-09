@@ -4,7 +4,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,9 +11,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/argon2"
+	"golang.org/x/term"
 )
 
 var vaultCmd = &cobra.Command{
@@ -50,14 +52,15 @@ var vaultInitCmd = &cobra.Command{
 			return fmt.Errorf("vault already exists at %s", vaultFile)
 		}
 
+		flagPw, _ := cmd.Flags().GetString("password")
+		password, err := readPassword(flagPw)
+		if err != nil {
+			return err
+		}
+
 		vault := Vault{
 			Version: 1,
 			Entries: []VaultEntry{},
-		}
-
-		password, _ := cmd.Flags().GetString("password")
-		if password == "" {
-			return fmt.Errorf("password is required (use --password)")
 		}
 
 		return saveVault(vaultFile, password, vault)
@@ -68,9 +71,10 @@ var vaultListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all entries in vault",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		password, _ := cmd.Flags().GetString("password")
-		if password == "" {
-			return fmt.Errorf("password is required (use --password)")
+		flagPw, _ := cmd.Flags().GetString("password")
+		password, err := readPassword(flagPw)
+		if err != nil {
+			return err
 		}
 
 		vault, err := loadVault(vaultFile, password)
@@ -106,9 +110,10 @@ var vaultAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add entry to vault",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		password, _ := cmd.Flags().GetString("password")
-		if password == "" {
-			return fmt.Errorf("password is required (use --password)")
+		flagPw, _ := cmd.Flags().GetString("password")
+		password, err := readPassword(flagPw)
+		if err != nil {
+			return err
 		}
 
 		vault, err := loadVault(vaultFile, password)
@@ -157,9 +162,10 @@ var vaultGetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id := args[0]
 
-		password, _ := cmd.Flags().GetString("password")
-		if password == "" {
-			return fmt.Errorf("password is required (use --password)")
+		flagPw, _ := cmd.Flags().GetString("password")
+		password, err := readPassword(flagPw)
+		if err != nil {
+			return err
 		}
 
 		vault, err := loadVault(vaultFile, password)
@@ -196,9 +202,10 @@ var vaultRemoveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id := args[0]
 
-		password, _ := cmd.Flags().GetString("password")
-		if password == "" {
-			return fmt.Errorf("password is required (use --password)")
+		flagPw, _ := cmd.Flags().GetString("password")
+		password, err := readPassword(flagPw)
+		if err != nil {
+			return err
 		}
 
 		vault, err := loadVault(vaultFile, password)
@@ -239,6 +246,11 @@ func loadVault(filename, password string) (Vault, error) {
 }
 
 func saveVault(filename, password string, vault Vault) error {
+	// Ensure the parent directory exists
+	if err := os.MkdirAll(filepath.Dir(filename), 0700); err != nil {
+		return fmt.Errorf("failed to create vault directory: %w", err)
+	}
+
 	data, err := json.Marshal(vault)
 	if err != nil {
 		return err
@@ -252,9 +264,22 @@ func saveVault(filename, password string, vault Vault) error {
 	return os.WriteFile(filename, encrypted, 0600)
 }
 
+// saltSize is the length of the random salt prepended to every ciphertext.
+const saltSize = 16
+
+// deriveKey stretches password into a 32-byte AES key using Argon2id.
+func deriveKey(password string, salt []byte) []byte {
+	return argon2.IDKey([]byte(password), salt, 3, 64*1024, 4, 32)
+}
+
 func encrypt(plaintext []byte, password string) ([]byte, error) {
-	key := sha256.Sum256([]byte(password))
-	block, err := aes.NewCipher(key[:])
+	salt := make([]byte, saltSize)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		return nil, fmt.Errorf("failed to generate salt: %w", err)
+	}
+
+	key := deriveKey(password, salt)
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -266,15 +291,24 @@ func encrypt(plaintext []byte, password string) ([]byte, error) {
 
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate nonce: %w", err)
 	}
 
-	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+	// Layout: salt | nonce | ciphertext+tag
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+	return append(salt, ciphertext...), nil
 }
 
 func decrypt(ciphertext []byte, password string) ([]byte, error) {
-	key := sha256.Sum256([]byte(password))
-	block, err := aes.NewCipher(key[:])
+	if len(ciphertext) < saltSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	salt := ciphertext[:saltSize]
+	ciphertext = ciphertext[saltSize:]
+
+	key := deriveKey(password, salt)
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -295,8 +329,28 @@ func decrypt(ciphertext []byte, password string) ([]byte, error) {
 
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		panic(fmt.Sprintf("failed to generate random ID: %v", err))
+	}
 	return base64.URLEncoding.EncodeToString(b)
+}
+
+// readPassword reads a password from the terminal without echoing it.
+// It falls back to the provided flag value if one is set.
+func readPassword(flagValue string) (string, error) {
+	if flagValue != "" {
+		return flagValue, nil
+	}
+	fmt.Fprint(os.Stderr, "Master password: ")
+	pw, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		return "", fmt.Errorf("failed to read password: %w", err)
+	}
+	if len(pw) == 0 {
+		return "", fmt.Errorf("password cannot be empty")
+	}
+	return string(pw), nil
 }
 
 func init() {
