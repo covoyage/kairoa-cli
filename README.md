@@ -97,51 +97,43 @@ kairoa data csv2json < data.csv
 
 ## Installation
 
-### Quick Install (macOS/Linux)
+### Homebrew (macOS / Linux)
+
+```bash
+brew install covoyage/tap/kairoa
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add covoyage https://github.com/covoyage/scoop-bucket
+scoop install kairoa
+```
+
+### Quick Install Script (macOS / Linux)
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/covoyage/kairoa-cli/main/install.sh | bash
 ```
 
-### Homebrew (macOS/Linux)
+### Manual Download
+
+Download the pre-built binary for your platform from [GitHub Releases](https://github.com/covoyage/kairoa-cli/releases/latest):
+
+| Platform | File |
+|----------|------|
+| macOS (Apple Silicon) | `kairoa_darwin_arm64.tar.gz` |
+| macOS (Intel) | `kairoa_darwin_x86_64.tar.gz` |
+| Linux (x86_64) | `kairoa_linux_x86_64.tar.gz` |
+| Linux (ARM64) | `kairoa_linux_arm64.tar.gz` |
+| Windows (x86_64) | `kairoa_windows_x86_64.zip` |
 
 ```bash
-brew tap covoyage/tap
-brew install kairoa
-```
-
-### Manual Installation
-
-#### macOS
-
-```bash
-# Intel Mac
-curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/latest/download/kairoa_darwin_x86_64.tar.gz
-
-# Apple Silicon Mac
-curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/latest/download/kairoa_darwin_arm64.tar.gz
-
-tar -xzf kairoa.tar.gz
+# macOS / Linux example
+tar -xzf kairoa_*.tar.gz
 sudo mv kairoa /usr/local/bin/
-
-# 验证安装
-kairoa --version
+kairoa version
 ```
-
-#### Linux
-
-```bash
-curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/latest/download/kairoa_linux_x86_64.tar.gz
-tar -xzf kairoa.tar.gz
-sudo mv kairoa /usr/local/bin/
-
-# Verify installation
-kairoa --version
-```
-
-#### Windows
-
-Download the latest release from [GitHub Releases](https://github.com/covoyage/kairoa-cli/releases) and extract to a directory in your PATH.
 
 ### Build from Source
 
@@ -149,6 +141,29 @@ Download the latest release from [GitHub Releases](https://github.com/covoyage/k
 git clone https://github.com/covoyage/kairoa-cli.git
 cd kairoa-cli
 go build -o kairoa .
+```
+
+## Quick Start
+
+```bash
+# Calculate hash
+kairoa hash text "hello world"
+
+# Generate UUID
+kairoa uuid v4
+
+# Base64 encode / decode
+kairoa base64 encode "hello"
+kairoa base64 decode "aGVsbG8="
+
+# Format JSON
+echo '{"a":1}' | kairoa json format
+
+# View version
+kairoa version
+
+# View all commands
+kairoa --help
 ```
 
 ## Usage
