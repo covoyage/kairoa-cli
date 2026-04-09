@@ -80,50 +80,6 @@ release:
   draft: false
   prerelease: auto
   # name_template intentionally omitted — GitHub uses the tag name as the release title
-  header: |
-    ## Kairoa CLI v{{.Version}}
-    
-    ### Installation
-    
-    #### macOS
-    ```bash
-    # Intel Mac
-    brew install covoyage/tap/kairoa
-    # or
-    curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/download/v{{.Version}}/kairoa_{{.Version}}_darwin_x86_64.tar.gz
-    tar -xzf kairoa.tar.gz
-    sudo mv kairoa /usr/local/bin/
-    ```
-    
-    #### Linux
-    ```bash
-    curl -L -o kairoa.tar.gz https://github.com/covoyage/kairoa-cli/releases/download/v{{.Version}}/kairoa_{{.Version}}_linux_x86_64.tar.gz
-    tar -xzf kairoa.tar.gz
-    sudo mv kairoa /usr/local/bin/
-    ```
-    
-    #### Windows
-    Download and extract the zip file from the assets below.
-    
-  footer: |
-    ## Quick Start
-    
-    ```bash
-    # Calculate hash
-    kairoa hash text "hello"
-    
-    # Generate UUID
-    kairoa uuid v4
-    
-    # Base64 encode
-    kairoa base64 encode "hello"
-    
-    # Format JSON
-    echo '{"a":1}' | kairoa json format
-    
-    # View all commands
-    kairoa --help
-    ```
 
 # Homebrew tap configuration (homebrew_casks replaces deprecated brews since v2.10)
 homebrew_casks:
