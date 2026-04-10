@@ -26,6 +26,20 @@ var hashCmd = &cobra.Command{
 	Long:  i18n.T("hash.long"),
 }
 
+// applyHashLocale refreshes all translatable strings in the hash command tree.
+func applyHashLocale() {
+	hashCmd.Short = i18n.T("hash.short")
+	hashCmd.Long = i18n.T("hash.long")
+	hashTextCmd.Short = i18n.T("hash.text")
+	hashFileCmd.Short = i18n.T("hash.file")
+	if f := hashTextCmd.Flags().Lookup("algorithm"); f != nil {
+		f.Usage = i18n.T("hash.algorithm")
+	}
+	if f := hashFileCmd.Flags().Lookup("algorithm"); f != nil {
+		f.Usage = i18n.T("hash.algorithm")
+	}
+}
+
 var hashTextCmd = &cobra.Command{
 	Use:   "text [string]",
 	Short: i18n.T("hash.text"),
@@ -41,7 +55,7 @@ var hashTextCmd = &cobra.Command{
 		for _, algo := range algorithms {
 			h := getHasher(algo)
 			if h == nil {
-				fmt.Fprintf(os.Stderr, i18n.T("error.unknown")+": %s\n", algo)
+				fmt.Fprintf(os.Stderr, i18n.T("error.unknown", algo)+"\n")
 				continue
 			}
 			h.Write([]byte(text))
@@ -73,7 +87,7 @@ var hashFileCmd = &cobra.Command{
 		for _, algo := range algorithms {
 			h := getHasher(algo)
 			if h == nil {
-				fmt.Fprintf(os.Stderr, i18n.T("error.unknown")+": %s\n", algo)
+				fmt.Fprintf(os.Stderr, i18n.T("error.unknown", algo)+"\n")
 				continue
 			}
 
@@ -137,4 +151,6 @@ func init() {
 
 	hashTextCmd.Flags().StringSliceP("algorithm", "a", []string{}, i18n.T("hash.algorithm"))
 	hashFileCmd.Flags().StringSliceP("algorithm", "a", []string{}, i18n.T("hash.algorithm"))
+
+	RegisterLocaleApplier(applyHashLocale)
 }
