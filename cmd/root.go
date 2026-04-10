@@ -34,19 +34,37 @@ It provides various utilities for developers including:
   - And more...`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		lang, _ := cmd.Flags().GetString("lang")
-		if lang != "" {
-			switch lang {
-			case "zh", "zh-CN", "zh-TW", "zh-HK":
-				i18n.SetLocale(i18n.Chinese)
-			case "en":
-				i18n.SetLocale(i18n.English)
-			}
+		if lang == "" {
+			return
+		}
+		switch lang {
+		case "zh", "zh-CN", "zh-TW", "zh-HK":
+			i18n.SetLocale(i18n.Chinese)
+		case "en":
+			i18n.SetLocale(i18n.English)
+		default:
+			return
+		}
+		// Re-apply translations to all commands whose Short/Long strings
+		// were evaluated at init() time before --lang was processed.
+		for _, fn := range localeAppliers {
+			fn()
 		}
 	},
 }
 
+// localeAppliers holds functions registered by each command package that
+// refresh their cobra.Command Short/Long/flag-usage strings after a locale
+// change triggered by --lang.
+var localeAppliers []func()
+
+// RegisterLocaleApplier registers a function to be called when the locale
+// changes at runtime via --lang.
+func RegisterLocaleApplier(fn func()) {
+	localeAppliers = append(localeAppliers, fn)
+}
+
 func Execute() error {
-	i18n.Init()
 	return rootCmd.Execute()
 }
 

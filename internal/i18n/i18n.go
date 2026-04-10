@@ -834,8 +834,16 @@ func (t *Translator) loadDefaultTranslations() {
 	}
 }
 
-// Global translator instance
-var globalTranslator = NewTranslator()
+// Global translator instance — locale is auto-detected immediately so that
+// T() calls in other packages' var/init declarations use the correct locale
+// before Execute() is ever called.
+var globalTranslator = newTranslatorWithDetect()
+
+func newTranslatorWithDetect() *Translator {
+	t := NewTranslator()
+	t.SetLocale(DetectLocale())
+	return t
+}
 
 // SetLocale sets the global locale
 func SetLocale(locale Locale) {
