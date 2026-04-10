@@ -55,7 +55,7 @@ var hashTextCmd = &cobra.Command{
 		for _, algo := range algorithms {
 			h := getHasher(algo)
 			if h == nil {
-				fmt.Fprintf(os.Stderr, i18n.T("error.unknown", algo)+"\n")
+				fmt.Fprintln(os.Stderr, i18n.T("error.unknown", algo))
 				continue
 			}
 			h.Write([]byte(text))
@@ -87,7 +87,7 @@ var hashFileCmd = &cobra.Command{
 		for _, algo := range algorithms {
 			h := getHasher(algo)
 			if h == nil {
-				fmt.Fprintf(os.Stderr, i18n.T("error.unknown", algo)+"\n")
+				fmt.Fprintln(os.Stderr, i18n.T("error.unknown", algo))
 				continue
 			}
 
