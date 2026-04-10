@@ -284,11 +284,21 @@ kairoa hash --help
 Kairoa CLI supports multiple languages:
 
 ```bash
-# Use Chinese
+# Use Chinese for a single command
 kairoa -l zh hash text "hello"
+```
 
-# Set default language
-kairoa lang set zh
+**Recommended: set the locale via environment variable** so that all help text
+is also translated. The `-l` flag can only affect runtime output — it cannot
+change the help text shown by `--help` due to a Cobra limitation (the help
+flag is handled before the language flag takes effect).
+
+```bash
+# Set locale permanently in your shell profile (~/.bashrc, ~/.zshrc, etc.)
+export LANG=zh_CN.UTF-8
+
+# Then all output including --help is displayed in Chinese
+kairoa hash --help
 ```
 
 ## Shell Completion

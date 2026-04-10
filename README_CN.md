@@ -282,11 +282,18 @@ kairoa hash --help
 Kairoa CLI 支持多种语言：
 
 ```bash
-# 使用中文
+# 单次命令使用中文
 kairoa -l zh hash text "hello"
+```
 
-# 设置默认语言
-kairoa lang set zh
+**推荐：通过环境变量设置语言**，这样帮助文本也会同步翻译。`-l` 标志只能影响运行时输出，无法改变 `--help` 显示的帮助文本——这是 Cobra 框架的已知限制（`--help` 标志在语言标志生效之前就被拦截处理了）。
+
+```bash
+# 在 Shell 配置文件（~/.bashrc、~/.zshrc 等）中永久设置
+export LANG=zh_CN.UTF-8
+
+# 之后所有输出包括 --help 均显示中文
+kairoa hash --help
 ```
 
 ## Shell 补全
